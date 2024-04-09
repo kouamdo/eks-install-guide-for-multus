@@ -156,17 +156,35 @@ For this Strategy use ```useIPsFromStartOfSubnet: false``` settings while creati
 ## Install Multus
 
 * Let's go to Bastion host where we can run kubectl. 
-* Install multus CNI.
+* Update CoreDNS addons to compatible version for your cluster :
+````
+aws eks describe-addon-versions --addon-name coredns --kubernetes-version 1.29 --query "addons[].addonVersions[].[addonVersion, compatibilities[].defaultVersion]" --output text
+````
+* To validate that coredns add-on is running, ensure that both the coredns pods are in Running state
+````
+kubectl get pods  -n kube-system | grep coredns
+````
+
+````
+aws eks describe-addon \
+    --cluster-name eks-multus-cluster \
+    --addon-name coredns \
+    --query "addon.addonVersion" \
+    --output text
+````
+
+* Install multus CNI thick plugin(current version).
   ````
-  kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/multus/v3.7.2-eksbuild.1/aws-k8s-multus.yaml
+  kubectl apply -f  https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/multus/v4.0.2-eksbuild.1/multus-daemonset-thick.yml
   ````
-* Change the multus container image address inside multus-daemonset.yml before applying it to the cluster.
+
+<!-- * Change the multus container image address inside multus-daemonset.yml before applying it to the cluster.
   ````
       containers:
       - name: kube-multus
         image: 940911992744.dkr.ecr.us-west-2.amazonaws.com/eks/multus-cni:v3.7.2-eksbuild.1
   ````
-* Go to this [page](https://docs.aws.amazon.com/eks/latest/userguide/add-ons-images.html) and find the container image address for your region.
+* Go to this [page](https://docs.aws.amazon.com/eks/latest/userguide/add-ons-images.html) and find the container image address for your region. -->
 
 
 ## Create NetworkAttachmentDefinition
