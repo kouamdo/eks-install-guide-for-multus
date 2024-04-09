@@ -179,9 +179,9 @@ aws eks describe-addon \
 ````
 
 * Install multus CNI thick plugin(current version).
-  ````
-  kubectl apply -f  https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/multus/v4.0.2-eksbuild.1/multus-daemonset-thick.yml
-  ````
+````
+kubectl apply -f  https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/multus/v4.0.2-eksbuild.1/multus-daemonset-thick.yml
+````
 
 <!-- * Change the multus container image address inside multus-daemonset.yml before applying it to the cluster.
   ````
