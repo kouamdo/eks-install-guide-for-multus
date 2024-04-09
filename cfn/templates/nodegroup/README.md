@@ -214,10 +214,30 @@ kubectl apply -f  https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/maste
           "gateway": "10.0.4.1"
         }
       }'
+  ---
+  apiVersion: "k8s.cni.cncf.io/v1"
+  kind: NetworkAttachmentDefinition
+  metadata:
+    name: ipvlan-conf-2
+  spec:
+    config: '{
+        "cniVersion": "0.3.0",
+        "type": "ipvlan",
+        "master": "eth2",
+        "mode": "l3",
+        "ipam": {
+          "type": "host-local",
+          "subnet": "10.0.6.0/24",
+          "rangeStart": "10.0.6.70",
+          "rangeEnd": "10.0.6.80",
+          "gateway": "10.0.6.1"
+        }
+      }'
   ````
 
   ````
   kubectl apply -f multus-ipvlan-1.yaml
+  kubectl apply -f multus-ipvlan-dual.yaml
   ````
 
 ## Deploy Sample App
@@ -235,6 +255,18 @@ kubectl apply -f  https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/maste
     - name: sampleapp
       command: ["/bin/bash", "-c", "trap : TERM INT; sleep infinity & wait"]
       image: praqma/network-multitool
+  ---
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: sampleapp-dual
+    annotations:
+        k8s.v1.cni.cncf.io/networks: ipvlan-conf-1, ipvlan-conf-2
+  spec:
+    containers:
+    - name: multitool
+      command: ["sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+      image: praqma/network-multitool
   ````
 
   ````
@@ -243,6 +275,15 @@ kubectl apply -f  https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/maste
   kubectl exec -it sampleapp-1 -- /bin/bash
   root@sampleapp:/# ip a
   ````
+* Test the connectivity:
+````
+kubectl exec -it sampleapp-dual -- ping -I net1 <sampleapp-net1-ipaddress>
+PING 10.0.4.70 (10.0.4.70) 56(84) bytes of data.
+64 bytes from 10.0.4.70: icmp_seq=1 ttl=127 time=0.139 ms
+64 bytes from 10.0.4.70: icmp_seq=2 ttl=127 time=0.034 ms
+64 bytes from 10.0.4.70: icmp_seq=3 ttl=127 time=0.032 ms
+64 bytes from 10.0.4.70: icmp_seq=4 ttl=127 time=0.034 ms
+````
  ## Automated Multus pod IP management on EKS
 
 Since, Multus pods are using ipvlan CNI, which means that the macaddress of the pod remains same as the master interface. However, vpc will not be aware of the assumed IP address of the pod, since the IP allocations to these pods hasn’t happened via VPC. VPC is only aware of the IP addresses allocated on the ENI on EC2 worker nodes. To make these IPs routable in VPC network, please refer to [Automated Multus pod IP management on EKS](https://github.com/aws-samples/eks-automated-ipmgmt-multus-pods). to automate the pod IP assignment seamlessly, without any change in application code.
