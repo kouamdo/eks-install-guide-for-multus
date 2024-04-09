@@ -156,10 +156,15 @@ For this Strategy use ```useIPsFromStartOfSubnet: false``` settings while creati
 ## Install Multus
 
 * Let's go to Bastion host where we can run kubectl. 
-* Update CoreDNS addons to compatible version for your cluster :
+* Check CoreDNS addons to compatible version for your cluster :
 ````
 aws eks describe-addon-versions --addon-name coredns --kubernetes-version 1.29 --query "addons[].addonVersions[].[addonVersion, compatibilities[].defaultVersion]" --output text
 ````
+* Update CoreDNS to the compatible version 
+````
+aws eks update-addon --cluster-name eks-multus-cluster --addon-name coredns --addon-version v1.11.1-eksbuild.4
+````
+
 * To validate that coredns add-on is running, ensure that both the coredns pods are in Running state
 ````
 kubectl get pods  -n kube-system | grep coredns
